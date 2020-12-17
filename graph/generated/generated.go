@@ -43,17 +43,24 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	JobStatus struct {
-		Count  func(childComplexity int) int
-		Status func(childComplexity int) int
+		Label func(childComplexity int) int
+		Value func(childComplexity int) int
+	}
+
+	JobsByAvgIncome struct {
+		Label func(childComplexity int) int
+		Value func(childComplexity int) int
 	}
 
 	Query struct {
-		JobStatus func(childComplexity int) int
+		JobStatus       func(childComplexity int) int
+		JobsByAvgIncome func(childComplexity int, last *int) int
 	}
 }
 
 type QueryResolver interface {
 	JobStatus(ctx context.Context) ([]*model.JobStatus, error)
+	JobsByAvgIncome(ctx context.Context, last *int) ([]*model.JobsByAvgIncome, error)
 }
 
 type executableSchema struct {
@@ -71,19 +78,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "JobStatus.count":
-		if e.complexity.JobStatus.Count == nil {
+	case "JobStatus.label":
+		if e.complexity.JobStatus.Label == nil {
 			break
 		}
 
-		return e.complexity.JobStatus.Count(childComplexity), true
+		return e.complexity.JobStatus.Label(childComplexity), true
 
-	case "JobStatus.status":
-		if e.complexity.JobStatus.Status == nil {
+	case "JobStatus.value":
+		if e.complexity.JobStatus.Value == nil {
 			break
 		}
 
-		return e.complexity.JobStatus.Status(childComplexity), true
+		return e.complexity.JobStatus.Value(childComplexity), true
+
+	case "JobsByAvgIncome.label":
+		if e.complexity.JobsByAvgIncome.Label == nil {
+			break
+		}
+
+		return e.complexity.JobsByAvgIncome.Label(childComplexity), true
+
+	case "JobsByAvgIncome.value":
+		if e.complexity.JobsByAvgIncome.Value == nil {
+			break
+		}
+
+		return e.complexity.JobsByAvgIncome.Value(childComplexity), true
 
 	case "Query.jobStatus":
 		if e.complexity.Query.JobStatus == nil {
@@ -91,6 +112,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.JobStatus(childComplexity), true
+
+	case "Query.jobsByAvgIncome":
+		if e.complexity.Query.JobsByAvgIncome == nil {
+			break
+		}
+
+		args, err := ec.field_Query_jobsByAvgIncome_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.JobsByAvgIncome(childComplexity, args["last"].(*int)), true
 
 	}
 	return 0, false
@@ -147,12 +180,18 @@ var sources = []*ast.Source{
 # https://gqlgen.com/getting-started/
 
 type JobStatus {
-  status: String!
-  count: Int!
+  label: String!
+  value: Int!
+}
+
+type JobsByAvgIncome {
+  value: Float!
+  label: String!
 }
 
 type Query {
   jobStatus: [JobStatus!]!
+  jobsByAvgIncome(last: Int): [JobsByAvgIncome!]!
 }
 
 `, BuiltIn: false},
@@ -175,6 +214,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_jobsByAvgIncome_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg0
 	return args, nil
 }
 
@@ -216,7 +270,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _JobStatus_status(ctx context.Context, field graphql.CollectedField, obj *model.JobStatus) (ret graphql.Marshaler) {
+func (ec *executionContext) _JobStatus_label(ctx context.Context, field graphql.CollectedField, obj *model.JobStatus) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -234,7 +288,7 @@ func (ec *executionContext) _JobStatus_status(ctx context.Context, field graphql
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return obj.Label, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -251,7 +305,7 @@ func (ec *executionContext) _JobStatus_status(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _JobStatus_count(ctx context.Context, field graphql.CollectedField, obj *model.JobStatus) (ret graphql.Marshaler) {
+func (ec *executionContext) _JobStatus_value(ctx context.Context, field graphql.CollectedField, obj *model.JobStatus) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -269,7 +323,7 @@ func (ec *executionContext) _JobStatus_count(ctx context.Context, field graphql.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Count, nil
+		return obj.Value, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -284,6 +338,76 @@ func (ec *executionContext) _JobStatus_count(ctx context.Context, field graphql.
 	res := resTmp.(int)
 	fc.Result = res
 	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _JobsByAvgIncome_value(ctx context.Context, field graphql.CollectedField, obj *model.JobsByAvgIncome) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "JobsByAvgIncome",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Value, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _JobsByAvgIncome_label(ctx context.Context, field graphql.CollectedField, obj *model.JobsByAvgIncome) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "JobsByAvgIncome",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Label, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_jobStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -319,6 +443,48 @@ func (ec *executionContext) _Query_jobStatus(ctx context.Context, field graphql.
 	res := resTmp.([]*model.JobStatus)
 	fc.Result = res
 	return ec.marshalNJobStatus2ᚕᚖtorreᚑtestᚑgqlᚋgraphᚋmodelᚐJobStatusᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_jobsByAvgIncome(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_jobsByAvgIncome_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().JobsByAvgIncome(rctx, args["last"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.JobsByAvgIncome)
+	fc.Result = res
+	return ec.marshalNJobsByAvgIncome2ᚕᚖtorreᚑtestᚑgqlᚋgraphᚋmodelᚐJobsByAvgIncomeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1498,13 +1664,45 @@ func (ec *executionContext) _JobStatus(ctx context.Context, sel ast.SelectionSet
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("JobStatus")
-		case "status":
-			out.Values[i] = ec._JobStatus_status(ctx, field, obj)
+		case "label":
+			out.Values[i] = ec._JobStatus_label(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "count":
-			out.Values[i] = ec._JobStatus_count(ctx, field, obj)
+		case "value":
+			out.Values[i] = ec._JobStatus_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var jobsByAvgIncomeImplementors = []string{"JobsByAvgIncome"}
+
+func (ec *executionContext) _JobsByAvgIncome(ctx context.Context, sel ast.SelectionSet, obj *model.JobsByAvgIncome) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jobsByAvgIncomeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JobsByAvgIncome")
+		case "value":
+			out.Values[i] = ec._JobsByAvgIncome_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "label":
+			out.Values[i] = ec._JobsByAvgIncome_label(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -1543,6 +1741,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_jobStatus(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "jobsByAvgIncome":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_jobsByAvgIncome(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -1823,6 +2035,21 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloat(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloat(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1883,6 +2110,53 @@ func (ec *executionContext) marshalNJobStatus2ᚖtorreᚑtestᚑgqlᚋgraphᚋmo
 		return graphql.Null
 	}
 	return ec._JobStatus(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNJobsByAvgIncome2ᚕᚖtorreᚑtestᚑgqlᚋgraphᚋmodelᚐJobsByAvgIncomeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.JobsByAvgIncome) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNJobsByAvgIncome2ᚖtorreᚑtestᚑgqlᚋgraphᚋmodelᚐJobsByAvgIncome(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNJobsByAvgIncome2ᚖtorreᚑtestᚑgqlᚋgraphᚋmodelᚐJobsByAvgIncome(ctx context.Context, sel ast.SelectionSet, v *model.JobsByAvgIncome) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._JobsByAvgIncome(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -2151,6 +2425,21 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalInt(*v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

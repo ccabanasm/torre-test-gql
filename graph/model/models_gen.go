@@ -3,6 +3,11 @@
 package model
 
 type JobStatus struct {
-	Status string `json:"status"`
-	Count  int    `json:"count"`
+	Label string `json:"label"`
+	Value int    `json:"value"`
+}
+
+type JobsByAvgIncome struct {
+	Value float64 `json:"value"`
+	Label string  `json:"label"`
 }

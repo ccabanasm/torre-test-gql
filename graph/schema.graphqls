@@ -3,11 +3,17 @@
 # https://gqlgen.com/getting-started/
 
 type JobStatus {
-  status: String!
-  count: Int!
+  label: String!
+  value: Int!
+}
+
+type JobsByAvgIncome {
+  value: Float!
+  label: String!
 }
 
 type Query {
   jobStatus: [JobStatus!]!
+  jobsByAvgIncome(last: Int): [JobsByAvgIncome!]!
 }
 

@@ -18,6 +18,14 @@ func (r *queryResolver) JobStatus(ctx context.Context) ([]*model.JobStatus, erro
 	return query, nil
 }
 
+func (r *queryResolver) JobsByAvgIncome(ctx context.Context, last *int) ([]*model.JobsByAvgIncome, error) {
+	query, err := jobs.GetByAvgIncomeLastX(*last)
+	if err != nil {
+		return nil, err
+	}
+	return query, nil
+}
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
