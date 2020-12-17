@@ -1,0 +1,31 @@
+Overview
+========
+I chosen to do the backend with Go, due its speed and good memory management. I've deployed an GraphQL API, because only data that is asked by client is send, reducing traffic a lot. Another good attribute is its lack of endpoints, so coding is much faster.
+Analysing data responses from Torre API, I've found many issues with labeling normalization, like countries that appear with different names. Those generates problems with data analysis.
+For the fronted I've choosen React, due I like to code in it, instead I've worked with Vue 2.* in other projects.
+
+I've deployed 3 github sources:
+https://github.com/ccabanasm/torre-response-parser
+https://github.com/ccabanasm/torre-test-gql
+https://github.com/ccabanasm/torre-test-front
+
+Dec 14th
+18:00 Test received
+19:00 First look at requests and responses from Torre REST API
+================
+Dec 15th
+08:00 Person response data structure documentation
+18:00 Job response data structure documentation
+20:00 Server initialization  (Fedora Linux 33 + PostgreSQL 12.4) & subdomain DNS linking
+================
+Dec 16th
+07:00 Person response data parsing functions
+09:00 Jobs response data parsing functions
+16:00 Functions to load person data into DB (20k ids inserted)
+18:00 Functions to load job data into DB (18k ids inserted)
+20:00 Load data into DB
+================
+Dec 17th
+05:30 Database deploy to server
+08:00 back & front end started
+17:00 Web app deployment (back & Frontend)
