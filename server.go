@@ -6,6 +6,7 @@ import (
 	"os"
 	"torre-test-gql/graph"
 	"torre-test-gql/graph/generated"
+	database "torre-test-gql/internal/db"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -18,6 +19,8 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
+
+	database.InitDB()
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
 
